@@ -9,8 +9,6 @@ from openerp.tests.common import TransactionCase
 
 from getaddons import get_modules, is_module
 
-# MANIFEST_FILES = ['__openerp__.py', '__terp__.py', '__odoo__.py']
-
 
 class OdooLint(TransactionCase):
 
@@ -31,20 +29,7 @@ class OdooLint(TransactionCase):
         domain = [('module', 'in', modules)] if modules else []
         return [
             xml_record.module + '.' + xml_record.name
-            for xml_record in self.env['ir.module.data'].search(domain)]
-
-    # def get_manifest_path(self, module):
-    #     """Get the path of a odoo module
-    #     :param module str: Name of module to get path
-    #     :return str: Full path of module
-    #     """
-    #     module_path = get_module_resource(module)
-    #     manifest_path = None
-    #     for fname_manifest in MANIFEST_FILES:
-    #         manifest_path = os.path.join(module_path, fname_manifest)
-    #         if os.path.isfile(manifest_path):
-    #             return manifest_path
-    #     raise "Manifest don't found for module %s" % module
+            for xml_record in self.env['ir.model.data'].search(domain)]
 
     def get_xml_ids_group_by_section(self, xml_ids):
         """Create a dictionary with section from manifest and xml_ids
@@ -70,8 +55,3 @@ class OdooLint(TransactionCase):
                     for section in sections:
                         if fname_r in manif_dict.get(section, []):
                             return section
-
-    def test_default_company(self):
-        xml_ids = self.get_xml_ids()
-        xml_ids_grp = self.get_xml_ids_group_by_section(xml_ids)
-        return xml_ids_grp
