@@ -19,6 +19,9 @@ class OdooLint(TransactionCase):
         for module_path in module_paths:
             modules.extend(get_modules(module_path))
         xml_ids = self.get_db_xml_ids(modules)
+        import pdb;pdb.set_trace()
+        self.get_xml_ids_group_by_section(xml_ids)
+        print "borrar"
 
     def get_db_xml_ids(self, modules=None):
         """Search all xml ids and identify the category from manifest file
@@ -27,9 +30,12 @@ class OdooLint(TransactionCase):
         :return list: ['module1.xml_id1', 'module2.xml_id2', ...]
         """
         domain = [('module', 'in', modules)] if modules else []
-        return [
-            xml_record.module + '.' + xml_record.name
+        module_xml_ids_list = [
+            (xml_record.module, xml_record.module + '.' + xml_record.name)
             for xml_record in self.env['ir.model.data'].search(domain)]
+        module_xml_ids = {}
+        for module, xml_id in [
+            do
 
     def get_xml_ids_group_by_section(self, xml_ids):
         """Create a dictionary with section from manifest and xml_ids
@@ -39,7 +45,7 @@ class OdooLint(TransactionCase):
         for module_xml_id in xml_ids:
             module, xml_id = module_xml_id.split('.')
             module_path = get_module_resource(module)
-            manifest_path = self.is_module(module_path)
+            manifest_path = is_module(module_path)
             xml_id_section = self.get_xml_id_section(manifest_path, xml_id)
         return xml_id_section
 
