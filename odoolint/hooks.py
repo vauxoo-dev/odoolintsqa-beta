@@ -4,10 +4,43 @@
 
 import imp
 import logging
+from contextlib import contextmanager
 
 from openerp import tools
 
 _logger = logging.getLogger(__name__)
+
+
+DATA_FILE_NAME = None
+DATA_FILE_SECTION = None
+DATA_FILE_MODULE = None
+
+
+@contextmanager
+def file_info(filename, filesection, filemodule):
+    global DATA_FILE_NAME
+    global DATA_FILE_SECTION
+    global DATA_FILE_MODULE
+    DATA_FILE_NAME = filename
+    DATA_FILE_SECTION = filesection
+    DATA_FILE_MODULE = filemodule
+    try:
+        yield
+    finally:
+        DATA_FILE_NAME = None
+        DATA_FILE_SECTION = None
+        DATA_FILE_MODULE = None
+
+
+def get_file_info():
+    global DATA_FILE_NAME
+    global DATA_FILE_SECTION
+    global DATA_FILE_MODULE
+    return {
+        'file_name': DATA_FILE_NAME,
+        'section': DATA_FILE_SECTION,
+        'module_real': DATA_FILE_MODULE,
+    }
 
 
 def monkey_patch_convert_file():
@@ -17,14 +50,16 @@ def monkey_patch_convert_file():
     convert_file_original = tools.convert.convert_file
 
     def convert_file(*args, **kwargs):
-        import pdb;pdb.set_trace()
-        return convert_file_original(*args, **kwargs)
+        module = args[1]
+        filename = args[2]
+        section = args[6]
+        with file_info(filename, section, module):
+            return convert_file_original(*args, **kwargs)
     tools.convert.convert_file = convert_file
-    # Reload sys.modules to propagate patch
+    # Reload to propagate patch
     imp.reload(tools)
 
 
 def post_load():
-    _logger.info(
-        'Patching openerp.tools.convert.convert_file method')
+    _logger.info('Patching openerp.tools.convert.convert_file method')
     monkey_patch_convert_file()

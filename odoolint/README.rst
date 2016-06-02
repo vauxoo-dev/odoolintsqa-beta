@@ -6,7 +6,7 @@
 odoolint
 ========
 
-This module add the functionality of checks common technicall errors
+This module add the functionality to check common technicall errors
 but that don't are detected by odoo runtime.
 
 Installation
