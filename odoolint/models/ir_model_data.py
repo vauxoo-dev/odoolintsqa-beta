@@ -10,5 +10,6 @@ class IrModelData(models.Model):
 
     @api.model
     def create(self, values):
+        # import pdb;pdb.set_trace()
         print "convert_file.func_code", convert_file.func_code
         return super(IrModelData, self).create(values)
