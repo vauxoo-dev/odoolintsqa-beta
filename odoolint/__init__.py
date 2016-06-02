@@ -4,10 +4,8 @@
 
 import imp
 import logging
-import sys
 
-from openerp.tools import convert
-import openerp
+from openerp import tools
 
 from . import models
 
@@ -15,13 +13,13 @@ _logger = logging.getLogger(__name__)
 
 
 def patch_openerp():
-    orig_convert_file = convert.convert_file
+    orig_convert_file = tools.convert.convert_file
 
     def convert_file(*args, **kwargs):
         import pdb;pdb.set_trace()
         return orig_convert_file(*args, **kwargs)
-    convert.convert_file = convert_file
-    imp.reload(openerp.tools)
+    tools.convert.convert_file = convert_file
+    imp.reload(tools)
 
 
 def post_load():
