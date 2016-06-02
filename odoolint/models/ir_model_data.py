@@ -3,7 +3,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from openerp import api, models, fields
-from openerp.tools.convert import convert_file
 from openerp.addons.odoolint.hooks import get_file_info
 
 
@@ -24,9 +23,9 @@ class IrModelData(models.Model):
 
     @api.model
     def create(self, values):
+        """Inherit create for add custom values"""
         if values is None:
             values = {}
         new_values = get_file_info()
         values.update(new_values)
-        print "values", values
         return super(IrModelData, self).create(values)

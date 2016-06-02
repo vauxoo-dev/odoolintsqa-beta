@@ -18,6 +18,9 @@ DATA_FILE_MODULE = None
 
 @contextmanager
 def file_info(filename, filesection, filemodule):
+    """Change the file_info temporally
+    """
+    # pylint: disable=global-statement
     global DATA_FILE_NAME
     global DATA_FILE_SECTION
     global DATA_FILE_MODULE
@@ -33,9 +36,8 @@ def file_info(filename, filesection, filemodule):
 
 
 def get_file_info():
-    global DATA_FILE_NAME
-    global DATA_FILE_SECTION
-    global DATA_FILE_MODULE
+    """Return dictionary with file_name, section of file and module real name
+    """
     return {
         'file_name': DATA_FILE_NAME,
         'section': DATA_FILE_SECTION,

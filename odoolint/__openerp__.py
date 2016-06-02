@@ -9,7 +9,9 @@
     "website": "https://odoo-community.org/",
     "author": "Vauxoo, Odoo Community Association (OCA)",
     "license": "AGPL-3",
-    "depends": [],
+    "depends": ["base"],
+    # TODO: Change to False to avoid install on production
+    "auto_install": True,
     "installable": True,
     "post_load": 'post_load',
 }
