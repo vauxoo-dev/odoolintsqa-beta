@@ -7,7 +7,7 @@ import os
 from openerp.modules.module import get_module_resource
 from openerp.tests.common import TransactionCase
 
-from getaddons import get_modules, is_module
+# from getaddons import get_modules, is_module
 
 
 class OdooLint(TransactionCase):

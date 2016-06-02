@@ -10,7 +10,8 @@
     "author": "Vauxoo, Odoo Community Association (OCA)",
     "license": "AGPL-3",
     "depends": [
-        "base",
+        # "base",
     ],
     "installable": True,
+    "pre_init_hook": "pre_init_hook",
 }

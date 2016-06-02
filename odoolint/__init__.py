@@ -5,3 +5,4 @@
 from . import models
 from . import monkey_patch
 from . import tests
+from .hooks import pre_init_hook
