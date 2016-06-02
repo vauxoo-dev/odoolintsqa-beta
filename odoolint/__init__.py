@@ -21,10 +21,7 @@ def patch_openerp():
         import pdb;pdb.set_trace()
         return orig_convert_file(*args, **kwargs)
     convert.convert_file = convert_file
-    openerp.tools.convert.convert_file = convert_file
     imp.reload(openerp.tools)
-    import pdb;pdb.set_trace()
-    sys.modules['openerp.tools.convert'].convert_file = convert_file
 
 
 def post_load():
