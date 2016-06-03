@@ -99,7 +99,7 @@ class IrModelData(models.Model):
         module = self.env['ir.module.module']
         imd_new = get_file_info()
         module_curr_str = imd_new.get('module_real')
-        module_ref_str = self.module_real
+        module_ref_str = self.module
         if not module_curr_str or not module_ref_str or \
                 module_ref_str == module_curr_str:
             return True
@@ -107,14 +107,20 @@ class IrModelData(models.Model):
         module_curr_dep_ids = self._get_module_upstream_dependencies(
             module_curr.ids, exclude_states=['uninstallable', 'to remove'])
         module_curr_deps = module.browse(module_curr_dep_ids).mapped('name')
+        for mod_autinst in module.search([
+                ('auto_install', '=', True),
+                ('name', 'not in', module_curr_deps)]):
+            mod_autinst_deps = mod_autinst.dependencies_id.mapped('name')
+            if not mod_autinst_deps or \
+                    set(mod_autinst_deps).issubset(set(module_curr_deps)):
+                module_curr_deps.append(mod_autinst.name)
+
         if module_curr_deps and module_ref_str not in module_curr_deps:
-            _logger.warning(
-                "The xml_id '%s.%s' is unachievable.",
-                self.module_real, self.name,
-            )
+            _logger.warning("The xml_id '%s.%s' is unachievable.",
+                module_ref_str, self.name)
+            import pdb;pdb.set_trace()
             return False
         return True
-
 
     @tools.ormcache(skiparg=3)
     def xmlid_lookup(self, cr, uid, xmlid):
