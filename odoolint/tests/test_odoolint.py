@@ -36,7 +36,7 @@ class OdooLint(TransactionCase):
     def setUp(self):
         super(OdooLint, self).setUp()
         self.model_data = self.env['ir.model.data']
-        print "hola mundo"
+        self.module = self.env['ir.module.module']
 
     def get_model(self, table_name):
         """Get model name of a table name"""
@@ -46,6 +46,7 @@ class OdooLint(TransactionCase):
     def test_xml_demo_used_in_data(self):
         # TODO: Consider ir_property case.
         demo_used_in_data = []
+        unachievable_xml_id = []
         for record in self.model_data.search([('table_name', '!=', False)]):
             self.env.cr.execute(SQL_FOREIGN_RELATIONS, (record.table_name,))
             for table_foreign, column_foreign in self.env.cr.fetchall():
@@ -64,25 +65,55 @@ class OdooLint(TransactionCase):
                         self.model_data.xmlid_lookup(foreign_xml_id[0])
                     foreign_model_data = \
                         self.model_data.browse(foreign_model_data_id)
+                    if not foreign_model_data.file_name:
+                        # foreign without data where import data
+                        #  before of the patch
+                        continue
+                    # TODO: Add a cache of module and dependencies
+                    # TODO: Consider auto_install: True
+                    # TODO: Get all modules installed with just base like as
+                    #       dependency to add them to known_dep_ids
+                    module_dependency_ids = self.module.search([
+                        ('name', '=', foreign_model_data.module_real)],
+                        limit=1).downstream_dependencies(
+                            known_dep_ids=None)
+                    dependencies = self.module.browse(
+                        module_dependency_ids).mapped('name')
+
+                    foreign_file_path = os.path.join(
+                        get_module_resource(foreign_model_data.module),
+                        foreign_model_data.file_name)
+                    local_file_path = os.path.join(
+                        get_module_resource(record.module),
+                        record.file_name)
+
+                    if record.module_real != foreign_model_data.module_real \
+                            and record.module_real not in dependencies:
+                        unachievable_xml_id.append(
+                            (foreign_model_data, record))
+                        _logger.warning(
+                            "The xml_id '%s.%s' of the file '%s' has the "
+                            "unachievable xml_id.ref('%s.%s') "
+                            "because the module '%s' "
+                            "is not a dependency of '%s'",
+                            foreign_model_data.module, foreign_model_data.name,
+                            foreign_file_path,
+                            record.module, record.name,
+                            record.module_real,
+                            foreign_model_data.module_real,
+                        )
                     if foreign_model_data.section == 'data' and \
                             record.section != 'data':
-                        demo_used_in_data.append((record, foreign_model_data))
                         local_bad_model = record
                         foreign_bad_model = foreign_model_data
-        # for local_bad_model, foreign_bad_model in demo_used_in_data:
-                        foreign_file_path = os.path.join(
-                            get_module_resource(foreign_bad_model.module),
-                            foreign_bad_model.file_name)
-                        local_file_path = os.path.join(
-                            get_module_resource(local_bad_model.module),
-                            local_bad_model.file_name
-                        )
-                        if local_bad_model.name not in \
-                                open(foreign_file_path).read():
+                        # TODO: Add a cache of files read
+                        source_content = open(foreign_file_path).read()
+                        if local_bad_model.name not in source_content:
                             # When a foreign value is assigned from default or
                             #  on change but don't is assigned directly from
                             #  xml_id
                             continue
+                        demo_used_in_data.append((record, foreign_model_data))
                         _logger.warning(
                             "The '%s' xml_id '%s' of the file '%s'\n"
                             "...is used from '%s' xml_id.ref('%s') "
@@ -92,8 +123,6 @@ class OdooLint(TransactionCase):
                             foreign_bad_model.section, foreign_bad_model.name,
                             foreign_file_path,
                         )
-                        import pdb;pdb.set_trace()
-                        print "hola mundo"
         self.assertFalse(demo_used_in_data)
 
     # def test_wrong_xml_ids(self):
