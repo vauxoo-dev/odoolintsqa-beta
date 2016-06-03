@@ -2,10 +2,12 @@
 # © 2016  Vauxoo (<http://www.vauxoo.com/>)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+import os
 import logging
 
 from openerp import api, fields, models, tools
 from openerp.addons.odoolint.hooks import get_file_info
+from openerp.modules.module import get_module_resource
 
 _logger = logging.getLogger(__name__)
 
@@ -92,7 +94,7 @@ class IrModelData(models.Model):
         return list(known_dep_ids)
 
     @api.multi
-    def _check_xml_id_unachievable(self):
+    def _check_xml_id_unachievable(self, xmlid):
         """Check a unachievable xml_id referenced
         """
         self.ensure_one()
@@ -110,21 +112,30 @@ class IrModelData(models.Model):
         for mod_autinst in module.search([
                 ('auto_install', '=', True),
                 ('name', 'not in', module_curr_deps)]):
+            # TODO: Get recursively the auto_install of auto_install modules
             mod_autinst_deps = mod_autinst.dependencies_id.mapped('name')
             if not mod_autinst_deps or \
                     set(mod_autinst_deps).issubset(set(module_curr_deps)):
                 module_curr_deps.append(mod_autinst.name)
 
         if module_curr_deps and module_ref_str not in module_curr_deps:
-            _logger.warning("The xml_id '%s.%s' is unachievable.",
-                module_ref_str, self.name)
-            import pdb;pdb.set_trace()
-            return False
+            file_path = os.path.join(
+                get_module_resource(imd_new['module_real']),
+                imd_new['file_name'])
+            # TODO: Use a cache of file content
+            file_content = open(file_path).read()
+            # TODO: Validate all xmlid cases, e.g. model_ in csv
+            if xmlid in file_content:
+                # Many times a ref id is used from a default or inherit method
+                # If the xml_id is in the content of the file, then is a real
+                _logger.warning("The xml_id '%s.%s' is unachievable.",
+                                module_ref_str, self.name)
+                return False
         return True
 
     @tools.ormcache(skiparg=3)
     def xmlid_lookup(self, cr, uid, xmlid):
         res = super(IrModelData, self).xmlid_lookup(cr, uid, xmlid)
         self._check_data_ref_demo(cr, uid, res[0])
-        self._check_xml_id_unachievable(cr, uid, res[0])
+        self._check_xml_id_unachievable(cr, uid, res[0], xmlid)
         return res
