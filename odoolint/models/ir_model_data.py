@@ -20,6 +20,10 @@ class IrModelData(models.Model):
     file_name = fields.Char(
         size=32,
         help="Record origin file name")
+    table_name = fields.Char(
+        size=64,
+        help="Table name of database where is stored this record"
+    )
 
     @api.model
     def create(self, values):
@@ -27,5 +31,8 @@ class IrModelData(models.Model):
         if values is None:
             values = {}
         new_values = get_file_info()
+        model = values.get('model')
+        if model:
+            new_values['table_name'] = self.env[model]._table
         values.update(new_values)
         return super(IrModelData, self).create(values)
