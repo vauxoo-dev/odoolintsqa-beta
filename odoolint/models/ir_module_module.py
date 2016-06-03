@@ -10,10 +10,10 @@ class IrModuleModule(models.Model):
 
     # Tis method is extracted from odoo/odoo v9.0
     @api.multi
+    # pylint: disable=dangerous-default-value
     def _get_module_upstream_dependencies(
-        self, mod_ids, known_dep_ids=None,
-        exclude_states=['installed', 'uninstallable', 'to remove']):
-        # noqa
+            self, mod_ids, known_dep_ids=None,
+            exclude_states=['installed', 'uninstallable', 'to remove']):
         """Copied from odoo native ir.module.module v9.0
         Return the dependency tree of modules of the given `ids`, and that
         satisfy the `exclude_states` filter """
@@ -35,9 +35,8 @@ class IrModuleModule(models.Model):
                     from ir_module_module_dependency
                     where module_id in %s) AND
                 m.state NOT IN %s AND
-                m.id NOT IN %s ''', (
-                    tuple(ids), tuple(exclude_states),
-                    tuple(known_dep_ids or ids)))
+                m.id NOT IN %s ''',
+            (tuple(ids), tuple(exclude_states), tuple(known_dep_ids or ids)))
         new_dep_ids = set([m[0] for m in cr.fetchall()])
         missing_mod_ids = new_dep_ids - known_dep_ids
         known_dep_ids |= new_dep_ids
