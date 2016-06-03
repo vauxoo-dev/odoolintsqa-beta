@@ -50,35 +50,35 @@ class OdooLint(TransactionCase):
             self.env.cr.execute(SQL_FOREIGN_RELATIONS, (record.table_name,))
             for table_foreign, column_foreign in self.env.cr.fetchall():
                 # Get foreign.xml_id.section and record.xml_id.section
-                foreing_model = self.get_model(table_foreign)
-                if not foreing_model:
+                foreign_model = self.get_model(table_foreign)
+                if not foreign_model:
                     # 'base' module case where import data before of the patch
                     continue
-                foreing_xml_ids = self.env[foreing_model].search([(
+                foreign_xml_ids = self.env[foreign_model].search([(
                     column_foreign, '=', record.res_id)])._get_external_ids()
-                for foreing_xml_id in foreing_xml_ids.values():
-                    if not foreing_xml_id:
+                for foreign_xml_id in foreign_xml_ids.values():
+                    if not foreign_xml_id:
                         # foreign without xml_id
                         continue
-                    foreing_model_data_id, _, _ = \
-                        self.model_data.xmlid_lookup(foreing_xml_id[0])
-                    foreing_model_data = \
-                        self.model_data.browse(foreing_model_data_id)
-                    if foreing_model_data.section == 'data' and \
+                    foreign_model_data_id, _, _ = \
+                        self.model_data.xmlid_lookup(foreign_xml_id[0])
+                    foreign_model_data = \
+                        self.model_data.browse(foreign_model_data_id)
+                    if foreign_model_data.section == 'data' and \
                             record.section != 'data':
-                        demo_used_in_data.append((record, foreing_model_data))
+                        demo_used_in_data.append((record, foreign_model_data))
                         local_bad_model = record
-                        foreing_bad_model = foreing_model_data
-        # for local_bad_model, foreing_bad_model in demo_used_in_data:
-                        foreing_file_path = os.path.join(
-                            get_module_resource(foreing_bad_model.module),
-                            foreing_bad_model.file_name)
+                        foreign_bad_model = foreign_model_data
+        # for local_bad_model, foreign_bad_model in demo_used_in_data:
+                        foreign_file_path = os.path.join(
+                            get_module_resource(foreign_bad_model.module),
+                            foreign_bad_model.file_name)
                         local_file_path = os.path.join(
                             get_module_resource(local_bad_model.module),
                             local_bad_model.file_name
                         )
                         if local_bad_model.name not in \
-                                open(foreing_file_path).read():
+                                open(foreign_file_path).read():
                             # When a foreign value is assigned from default or
                             #  on change but don't is assigned directly from
                             #  xml_id
@@ -89,8 +89,8 @@ class OdooLint(TransactionCase):
                             "of the file '%s'",
                             local_bad_model.section, local_bad_model.name,
                             local_file_path,
-                            foreing_bad_model.section, foreing_bad_model.name,
-                            foreing_file_path,
+                            foreign_bad_model.section, foreign_bad_model.name,
+                            foreign_file_path,
                         )
                         import pdb;pdb.set_trace()
                         print "hola mundo"
