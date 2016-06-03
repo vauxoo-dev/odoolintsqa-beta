@@ -63,13 +63,13 @@ class IrModelData(models.Model):
     def _get_module_upstream_dependencies(self, module_ids, known_dep_ids=None,
         exclude_states=['installed', 'uninstallable', 'to remove'],
         context=None):
+        # noqa
         """Copied from odoo native ir.module.module v9.0
         Return the dependency tree of modules of the given `ids`, and that
         satisfy the `exclude_states` filter """
         # TODO: Move a ir_module_module.py
         ids = module_ids
         cr = self.env.cr
-        uid = self.env.uid
         if not ids:
             return []
         known_dep_ids = set(known_dep_ids or [])
