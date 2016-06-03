@@ -2,10 +2,13 @@
 # © 2016  Vauxoo (<http://www.vauxoo.com/>)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-# import os
+import logging
+import os
 
-# from openerp.modules.module import get_module_resource
+from openerp.modules.module import get_module_resource
 from openerp.tests.common import TransactionCase, at_install, post_install
+
+_logger = logging.getLogger(__name__)
 
 SQL_FOREIGN_RELATIONS = """
 SELECT cl1.relname as table_rel,
@@ -61,8 +64,36 @@ class OdooLint(TransactionCase):
                         self.model_data.xmlid_lookup(foreing_xml_id[0])
                     foreing_model_data = \
                         self.model_data.browse(foreing_model_data_id)
-                    if record.section != foreing_model_data.section:
+                    if foreing_model_data.section == 'data' and \
+                            record.section != 'data':
                         demo_used_in_data.append((record, foreing_model_data))
+                        local_bad_model = record
+                        foreing_bad_model = foreing_model_data
+        # for local_bad_model, foreing_bad_model in demo_used_in_data:
+                        foreing_file_path = os.path.join(
+                            get_module_resource(foreing_bad_model.module),
+                            foreing_bad_model.file_name)
+                        local_file_path = os.path.join(
+                            get_module_resource(local_bad_model.module),
+                            local_bad_model.file_name
+                        )
+                        if local_bad_model.name not in \
+                                open(foreing_file_path).read():
+                            # When a foreign value is assigned from default or
+                            #  on change but don't is assigned directly from
+                            #  xml_id
+                            continue
+                        _logger.warning(
+                            "The '%s' xml_id '%s' of the file '%s'\n"
+                            "...is used from '%s' xml_id.ref('%s') "
+                            "of the file '%s'",
+                            local_bad_model.section, local_bad_model.name,
+                            local_file_path,
+                            foreing_bad_model.section, foreing_bad_model.name,
+                            foreing_file_path,
+                        )
+                        import pdb;pdb.set_trace()
+                        print "hola mundo"
         self.assertFalse(demo_used_in_data)
 
     # def test_wrong_xml_ids(self):
