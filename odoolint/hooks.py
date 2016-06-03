@@ -55,6 +55,7 @@ def monkey_patch_convert_file():
         module = args[1]
         filename = args[2]
         section = args[6]
+        # print args, kwargs
         with file_info(filename, section, module):
             return convert_file_original(*args, **kwargs)
     tools.convert.convert_file = convert_file

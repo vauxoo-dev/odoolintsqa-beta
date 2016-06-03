@@ -2,7 +2,7 @@
 # © 2016  Vauxoo (<http://www.vauxoo.com/>)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from openerp import api, models, fields
+from openerp import api, models, fields, tools
 from openerp.addons.odoolint.hooks import get_file_info
 
 
@@ -37,3 +37,14 @@ class IrModelData(models.Model):
             new_values['table_name'] = self.env[model]._table
         values.update(new_values)
         return super(IrModelData, self).create(values)
+
+    @tools.ormcache(skiparg=3)
+    def xmlid_lookup(self, cr, uid, xmlid):
+        res = super(IrModelData, self).xmlid_lookup(cr, uid, xmlid)
+        new_values = get_file_info()
+        imd_id, model, res_id = res
+        imd_ref = self.pool['ir.model.data'].browse(cr, uid, imd_id)
+        if imd_ref.section in ['demo', 'demo_xml', 'test'] and \
+                new_values.get('section') in ['data', 'init', 'update']:
+            import pdb;pdb.set_trace()
+        return res
