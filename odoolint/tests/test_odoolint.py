@@ -54,6 +54,9 @@ class OdooLint(TransactionCase):
                 foreing_xml_ids = self.env[foreing_model].search([(
                     column_foreign, '=', record.res_id)])._get_external_ids()
                 for foreing_xml_id in foreing_xml_ids.values():
+                    if not foreing_xml_id:
+                        # foreign without xml_id
+                        continue
                     foreing_model_data_id, _, _ = \
                         self.model_data.xmlid_lookup(foreing_xml_id[0])
                     foreing_model_data = \
