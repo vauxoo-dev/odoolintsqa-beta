@@ -2,8 +2,12 @@
 # © 2016  Vauxoo (<http://www.vauxoo.com/>)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+import logging
+
 from openerp import api, models, fields, tools
 from openerp.addons.odoolint.hooks import get_file_info
+
+_logger = logging.getLogger(__name__)
 
 
 class IrModelData(models.Model):
@@ -41,10 +45,13 @@ class IrModelData(models.Model):
     @tools.ormcache(skiparg=3)
     def xmlid_lookup(self, cr, uid, xmlid):
         res = super(IrModelData, self).xmlid_lookup(cr, uid, xmlid)
-        new_values = get_file_info()
-        imd_id, model, res_id = res
-        imd_ref = self.pool['ir.model.data'].browse(cr, uid, imd_id)
+        imd_new = get_file_info()
+        imd_ref = self.pool['ir.model.data'].browse(cr, uid, res[0])
         if imd_ref.section in ['demo', 'demo_xml', 'test'] and \
-                new_values.get('section') in ['data', 'init', 'update']:
-            import pdb;pdb.set_trace()
+                imd_new.get('section') in ['data', 'init', 'update']:
+            _logger.warning(
+                "Demo xml '%s/%s' id '%s' referenced from data xml '%s/%s'",
+                imd_ref.module_real, imd_ref.file_name, imd_ref.name,
+                imd_new['module_real'], imd_new['file_name'],
+            )
         return res
