@@ -5,17 +5,63 @@
 # import os
 
 # from openerp.modules.module import get_module_resource
-from openerp.tests.common import TransactionCase
+from openerp.tests.common import TransactionCase, at_install, post_install
+
+SQL_FOREIGN_RELATIONS = """
+SELECT cl1.relname as table_rel,
+       att1.attname as column_rel
+FROM pg_constraint as con, pg_class as cl1,
+     pg_class as cl2, pg_attribute as att1,
+     pg_attribute as att2
+WHERE con.conrelid = cl1.oid
+     AND con.confrelid = cl2.oid
+     AND array_lower(con.conkey, 1) = 1
+     AND con.conkey[1] = att1.attnum
+     AND att1.attrelid = cl1.oid
+     AND cl2.relname = %s
+     AND att2.attname = 'id'
+     AND array_lower(con.confkey, 1) = 1
+     AND con.confkey[1] = att2.attnum
+     AND att2.attrelid = cl2.oid
+     AND con.contype = 'f';
+"""
 
 
+@at_install(False)
+@post_install(True)
 class OdooLint(TransactionCase):
     def setUp(self):
+        super(OdooLint, self).setUp()
         self.model_data = self.env['ir.model.data']
+        print "hola mundo"
 
-
+    def get_model(self, table_name):
+        """Get model name of a table name"""
+        return self.model_data.search(
+            [('table_name', '=', table_name)], limit=1).model
 
     def test_xml_demo_used_in_data(self):
-        pass
+        # TODO: Consider ir_property case.
+        demo_used_in_data = []
+        for record in self.model_data.search([('table_name', '!=', False)]):
+            self.env.cr.execute(SQL_FOREIGN_RELATIONS, (record.table_name,))
+            for table_foreign, column_foreign in self.env.cr.fetchall():
+                # Get foreign.xml_id.section and record.xml_id.section
+                foreing_model = self.get_model(table_foreign)
+                if not foreing_model:
+                    # 'base' module case where import data before of the patch
+                    continue
+                foreing_xml_ids = self.env[foreing_model].search([(
+                    column_foreign, '=', record.res_id)])._get_external_ids()
+                for foreing_xml_id in foreing_xml_ids.values():
+                    foreing_model_data_id, _, _ = \
+                        self.model_data.xmlid_lookup(foreing_xml_id[0])
+                    foreing_model_data = \
+                        self.model_data.browse(foreing_model_data_id)
+                    if record.section != foreing_model_data.section:
+                        demo_used_in_data.append((record, foreing_model_data))
+        self.assertFalse(demo_used_in_data)
+
     # def test_wrong_xml_ids(self):
     #     # TODO: Deprecated?
     #     module_paths = os.environ.get('TRAVIS_BUILD_DIR', '').split(",") + \

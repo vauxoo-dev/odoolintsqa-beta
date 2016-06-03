@@ -24,6 +24,7 @@ class IrModelData(models.Model):
         size=64,
         help="Table name of database where is stored this record"
     )
+    # TODO: Add xml_id computed field store=True
 
     @api.model
     def create(self, values):
