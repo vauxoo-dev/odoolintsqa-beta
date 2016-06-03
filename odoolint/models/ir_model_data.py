@@ -42,16 +42,23 @@ class IrModelData(models.Model):
         values.update(new_values)
         return super(IrModelData, self).create(values)
 
+    @api.multi
+    def _check_data_ref_demo(self):
+        self.ensure_one()
+        imd_new = get_file_info()
+        if self.section in ['demo', 'demo_xml', 'test'] and \
+                imd_new.get('section') in ['data', 'init', 'update']:
+            _logger.warning(
+                "Demo xml_id '%s' of '%s/%s' is referenced "
+                "from data xml '%s/%s'",
+                self.name, self.module_real, self.file_name,
+                imd_new['module_real'], imd_new['file_name'],
+            )
+            return False
+        return True
+
     @tools.ormcache(skiparg=3)
     def xmlid_lookup(self, cr, uid, xmlid):
         res = super(IrModelData, self).xmlid_lookup(cr, uid, xmlid)
-        imd_new = get_file_info()
-        imd_ref = self.pool['ir.model.data'].browse(cr, uid, res[0])
-        if imd_ref.section in ['demo', 'demo_xml', 'test'] and \
-                imd_new.get('section') in ['data', 'init', 'update']:
-            _logger.warning(
-                "Demo xml '%s/%s' id '%s' referenced from data xml '%s/%s'",
-                imd_ref.module_real, imd_ref.file_name, imd_ref.name,
-                imd_new['module_real'], imd_new['file_name'],
-            )
+        self._check_data_ref_demo(cr, uid, res[0])
         return res
