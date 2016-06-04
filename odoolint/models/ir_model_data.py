@@ -30,7 +30,6 @@ class IrModelData(models.Model):
         size=64,
         help="Table name of database where is stored this record"
     )
-    # TODO: Add xml_id computed field store=True
 
     @api.model
     def create(self, values):
@@ -107,3 +106,17 @@ class IrModelData(models.Model):
         self._check_data_ref_demo(cr, uid, res[0])
         self._check_xml_id_unachievable(cr, uid, res[0], xmlid)
         return res
+
+    def _update(self, cr, uid, model, module, values, xml_id=False, store=True,
+                noupdate=False, mode='init', res_id=False, context=None):
+        """Inherit to force use of checks in case where a xml_id.record
+        is overwrite from other module.
+        """
+        if module and xml_id and '.' in xml_id and \
+                not xml_id.startswith(module + '.'):
+            # Just in xml_id from other modules
+            self.xmlid_lookup(cr, uid, xml_id)
+        return super(IrModelData, self)._update(
+            cr, uid, model=model, module=module, values=values, xml_id=xml_id,
+            store=store, noupdate=noupdate, mode=mode, res_id=res_id,
+            context=context)
