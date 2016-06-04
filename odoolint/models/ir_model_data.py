@@ -69,10 +69,11 @@ class IrModelData(models.Model):
         module = self.env['ir.module.module']
         imd_new = get_file_info()
         module_curr_str = imd_new.get('module_real')
-        module_ref_str = self.module
+        module_ref_str = xmlid.split('.')[0]
         if not module_curr_str or not module_ref_str or \
                 module_ref_str == module_curr_str:
             return True
+        # TODO: Add a cache of tree of depends
         module_curr = module.search([('name', '=', module_curr_str)], limit=1)
         module_curr_dep_ids = module_curr._get_module_upstream_dependencies(
             module_curr.ids, exclude_states=['uninstallable', 'to remove'])
@@ -96,8 +97,7 @@ class IrModelData(models.Model):
             if xmlid in file_content:
                 # Many times a ref id is used from a default or inherit method
                 # If the xml_id is in the content of the file, then is a real
-                _logger.warning("The xml_id '%s.%s' is unachievable.",
-                                module_ref_str, self.name)
+                _logger.warning("The xml_id '%s' is unachievable.", xmlid)
                 return False
         return True
 
