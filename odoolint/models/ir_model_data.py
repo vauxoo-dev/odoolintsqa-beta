@@ -115,7 +115,11 @@ class IrModelData(models.Model):
         if module and xml_id and '.' in xml_id and \
                 not xml_id.startswith(module + '.'):
             # Just in xml_id from other modules
-            self.xmlid_lookup(cr, uid, xml_id)
+            try:
+                self.xmlid_lookup(cr, uid, xml_id)
+            except BaseException:
+                # All exceptions are off-target here
+                pass
         return super(IrModelData, self)._update(
             cr, uid, model=model, module=module, values=values, xml_id=xml_id,
             store=store, noupdate=noupdate, mode=mode, res_id=res_id,
